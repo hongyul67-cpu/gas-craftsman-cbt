@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>가스기능사 필기</title>
+<!-- 수업용 「모두 같은 문제」 — 다른 공용 스크립트보다 먼저 (?fix=1) -->
+<script src="https://hongyul67-cpu.github.io/links/fixorder.js"></script>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#fff; --line:#e2e5ea; --tx:#1c2430; --dim:#6b7684;
+    --pri:#ea580c; --ok:#12a150; --no:#e5484d; --warn:#f5a524;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);
+       font:15px/1.65 "Pretendard","맑은 고딕",system-ui,sans-serif}
+  .wrap{max-width:880px;margin:0 auto;padding:16px 14px 90px}
+
+  header{display:flex;align-items:baseline;gap:10px;margin:6px 0 14px;flex-wrap:wrap}
+  header h1{font-size:20px;margin:0;font-weight:800}
+  header .sub{color:var(--dim);font-size:13px}
+
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .tab{padding:9px 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);
+       cursor:pointer;font-weight:700;font-size:14px;color:var(--dim)}
+  .tab.on{background:var(--pri);border-color:var(--pri);color:#fff}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+        padding:16px 18px;margin-bottom:12px}
+  .card h3{margin:0 0 8px;font-size:16px}
+
+  .btn{border:1px solid var(--line);background:var(--card);border-radius:10px;
+       padding:10px 16px;font-weight:700;cursor:pointer;font-size:14px;color:var(--tx)}
+  .btn-primary{background:var(--pri);border-color:var(--pri);color:#fff}
+  .btn-ghost{background:#f2f4f7}
+  .btn:disabled{opacity:.5;cursor:default}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  /* 범위 고르기 */
+  .chrow{display:flex;align-items:center;gap:8px;padding:7px 2px;border-bottom:1px dashed var(--line)}
+  .chrow label{display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;font-weight:700}
+  .chrow input,.secs input{width:17px;height:17px;accent-color:var(--pri);cursor:pointer}
+  .secs{padding:4px 0 10px 28px;border-bottom:1px dashed var(--line)}
+  .secs label{display:flex;align-items:flex-start;gap:8px;cursor:pointer;
+              font-size:14px;padding:4px 0;color:#334}
+  .lnk{border:0;background:none;color:var(--pri);font-weight:700;font-size:13px;cursor:pointer;padding:2px 4px}
+
+  /* 문제 */
+  .qnum{color:var(--dim);font-size:13px;font-weight:700}
+  .qtext{font-size:17px;font-weight:700;margin:6px 0 12px;line-height:1.55}
+  .choice{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--card);
+          border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;font-size:15px;
+          color:var(--tx);line-height:1.5}
+  .choice:hover{border-color:var(--pri)}
+  .choice.correct{border-color:var(--ok);background:#eafaf1}
+  .choice.wrong{border-color:var(--no);background:#fdeeee}
+  .choice.picked{border-width:2px}
+  .explain{background:#f8fafc;border-left:3px solid var(--pri);border-radius:0 8px 8px 0;
+           padding:10px 14px;margin-top:10px;color:#334}
+  /* 법령이 바뀌었을 수 있는 문항 — 해설 아래 한 줄 */
+  .law{margin-top:8px;padding:7px 10px;border-radius:8px;background:#fff7e6;color:#8a5a00;font-size:13px}
+  .rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 10px;margin-top:8px}
+  .rgrid label,.sjrow label{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:14px;padding:4px 2px}
+  .rgrid input,.sjrow input{width:17px;height:17px;accent-color:var(--pri);cursor:pointer}
+  .sjrow{display:flex;gap:6px 18px;flex-wrap:wrap;margin-top:6px}
+  .sjrow label{font-weight:700;font-size:15px}
+  .sjtbl{margin:10px auto 0;border-collapse:collapse;font-size:14px}
+  .sjtbl td,.sjtbl th{border:1px solid var(--line);padding:4px 12px}
+  .cbtgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px}
+  .cbtpick{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left}
+  .cbtpick:hover{border-color:var(--pri)}
+  .progress{height:8px;background:#e8ebf0;border-radius:99px;overflow:hidden;margin:10px 0 16px}
+  .progress > i{display:block;height:100%;background:var(--pri);width:0;transition:width .25s}
+
+  .empty{color:var(--dim);text-align:center;padding:34px 10px}
+  .score{font-size:34px;font-weight:900;letter-spacing:-1px}
+  .muted{color:var(--dim);font-size:13px}
+  .pill{display:inline-block;background:#eef1f5;border-radius:99px;padding:2px 10px;
+        font-size:12px;font-weight:700;color:var(--dim)}
+  .pill.ok{background:#eafaf1;color:#0a7a3c}
+  .pill.no{background:#fdeeee;color:#b3282c}
+
+  /* ── CBT 실전 화면 — 실제 CBT 시험 화면을 본뜬 것 ───────────── */
+  .exbar{position:sticky;top:0;z-index:5;background:var(--card);border:1px solid var(--line);
+         border-radius:12px;padding:8px 12px;margin-bottom:10px;
+         display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .exbar .grp{display:flex;gap:4px;align-items:center}
+  .exbar .lb{font-size:12px;color:var(--dim);font-weight:700}
+  .sbtn{border:1px solid var(--line);background:#f7f8fa;border-radius:8px;padding:5px 10px;
+        font-size:13px;font-weight:700;cursor:pointer;color:var(--tx)}
+  .sbtn.on{background:var(--pri);border-color:var(--pri);color:#fff}
+  .clock{margin-left:auto;font-weight:900;font-size:17px;font-variant-numeric:tabular-nums}
+  .clock.warn{color:var(--no)}
+  .exgrid{display:grid;grid-template-columns:1fr 220px;gap:12px;align-items:start}
+  .qcol{display:grid;gap:12px;align-content:start}
+  .qcol.c2{grid-template-columns:1fr 1fr}
+  .qcol.c3{grid-template-columns:1fr 1fr 1fr}
+  .exam .choice{padding:9px 12px;margin-bottom:6px}
+  .exam .qtext{font-size:16px}
+  .exam.big{font-size:17px}
+  .exam.big .qtext{font-size:20px}
+  .exam.big .choice{font-size:18px}
+  .exam .choice.sel{border-color:var(--pri);border-width:2px;background:#eef4ff}
+  /* 답안 표기란 — 실제 시험처럼 오른쪽에 붙어 따라다닙니다 */
+  .omr{position:sticky;top:60px;background:var(--card);border:1px solid var(--line);
+       border-radius:12px;padding:8px 10px}
+  .omr h4{margin:0 0 6px;font-size:13px;text-align:center}
+  .omr .rows{max-height:58vh;overflow:auto}
+  .omr .r{display:flex;align-items:center;gap:3px;padding:2px 0;border-bottom:1px solid #f1f3f6}
+  .omr .r.cur{background:#eef4ff;border-radius:6px}
+  .omr .n{width:22px;font-size:12px;font-weight:800;color:var(--dim);text-align:right;margin-right:2px;
+           border:0;background:none;cursor:pointer;padding:0}
+  .omr .n:hover{color:var(--pri);text-decoration:underline}
+  .bub{width:23px;height:23px;border-radius:50%;border:1px solid var(--line);background:#fff;
+       font-size:11px;cursor:pointer;color:var(--dim);padding:0;line-height:1}
+  .bub.on{background:var(--pri);border-color:var(--pri);color:#fff}
+  .mk{width:19px;height:19px;border:1px solid var(--line);border-radius:5px;background:#fff;
+      cursor:pointer;font-size:10px;padding:0;line-height:1}
+  .mk.on{background:#fff5da;border-color:var(--warn)}
+  .calc{position:fixed;right:16px;bottom:90px;width:226px;background:#fff;border:1px solid var(--line);
+        border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.2);padding:10px;z-index:60}
+  .calc .disp{background:#111826;color:#fff;border-radius:8px;padding:8px 10px;text-align:right;
+              font-size:20px;font-weight:800;margin-bottom:8px;overflow:hidden;white-space:nowrap}
+  .calc .pad{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+  .calc .pad button{padding:9px 0;border:1px solid var(--line);background:#f7f8fa;border-radius:8px;
+                    font-weight:700;cursor:pointer;font-size:14px}
+  /* 화면 안 알림창 — 시험 중에는 브라우저 confirm 창을 쓰지 않습니다 */
+  .ovl{position:fixed;inset:0;background:rgba(15,23,42,.5);display:flex;align-items:center;
+       justify-content:center;z-index:80;padding:16px}
+  .ovl .box{background:#fff;border-radius:14px;padding:20px;max-width:380px;width:100%}
+  .ovl h3{margin:0 0 8px;font-size:17px}
+  .ovl .msg{color:#334;font-size:14px;line-height:1.6;white-space:pre-line}
+  @media(max-width:760px){
+    .exgrid{grid-template-columns:1fr}
+    .qcol.c2,.qcol.c3{grid-template-columns:1fr}
+    .omr{position:static}
+    .omr .rows{max-height:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>🔥 가스기능사 필기</h1>
+    <span class="sub" id="hdSub"></span>
+  </header>
+
+  <div class="tabs">
+    <button class="tab on" data-view="home">🏠 범위 고르기</button>
+    <button class="tab"    data-view="practice">✏️ 연습 8문항</button>
+    <button class="tab"    data-view="exam">🏁 종합시험 20문항</button>
+    <button class="tab"    data-view="cbt">🖥️ CBT 실전</button>
+    <button class="tab"    data-view="wrong">📕 오답노트</button>
+  </div>
+
+  <div id="view"></div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   가스기능사 필기 CBT
+   규약: https://github.com/hongyul67-cpu/links/blob/master/CONVENTIONS.md
+
+   문항은 이 파일에 없습니다. data/bank.js (build_bank.py 가 구움) 에 있습니다.
+     window.GAS_BANK   — 기출 19회차 1,140문항 + 이론 예상문제
+     window.GAS_EXAMS  — CBT 실전 회차(책 문제 번호 순서의 아이디 60개씩)
+     window.GAS_ROUNDS — 범위 고르기 목록(기출 회차 · 예상문제 챕터)
+
+   여기서 지키는 것 (_작업/가스기능사 전사/검수보고.md)
+     1. 무작위 뽑기에서 같은 문제(d — 앞 회차에 이미 나온 것)는 뺀다. CBT 실전은 회차 그대로
+     2. 문제도 보기도 섞는다. 단 해설이 보기 번호를 가리키는 문항(x)은 보기를 안 섞는다
+     3. 법령이 바뀌었을 수 있는 문항(l)은 해설 아래 한 줄로 알린다(정답은 책대로)
+     4. 범위는 회차(또는 예상문제 챕터) × 과목(안전 · 장치 · 일반)
+   ══════════════════════════════════════════════════════════════ */
+
+const CFG = {
+  practiceN : 8,                       // 연습 문항 수 (규약 2)
+  examN     : 20,                      // 종합시험 문항 수 (규약 2)
+  passScore : 60,                      // 합격선
+  storeKey  : 'gas-craftsman-cbt_v1',
+};
+const TOOL = '가스기능사 필기';
+const SUBJ = [                          // 실제 시험 과목 이름 — 문항의 u 칸
+  { k:'안전', t:'가스 안전관리' },
+  { k:'장치', t:'가스장치 및 기기' },
+  { k:'일반', t:'가스일반' },
+];
+
+const $  = s => document.querySelector(s);
+const el = h => { const d=document.createElement('div'); d.innerHTML=h.trim(); return d.firstElementChild; };
+const esc = s => String(s==null?'':s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+/* Math.random 을 그대로 씁니다 — ?fix=1 이면 fixorder.js 가 고정 난수로 바꿔
+   반 전체가 같은 문제·같은 보기 순서를 받습니다. */
+const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(v=>v[1]);
+/* 해설 아래 덧붙임 — 법령 확인 표시. (해설 그림은 마스터 도구 그림이 끝나면 붙입니다) */
+function figHtml(id){
+  const r = BYID[id];
+  if(!r || !r.l) return '';
+  return '<div class="law">⚖️ 법령이 바뀌었을 수 있는 문항입니다 — ' + esc(r.l)
+       + '. 정답은 교재(2022년 기준) 그대로입니다.</div>';
+}
+
+/* 문제은행은 화면이 뜬 뒤에 채워집니다 — 이 PC 는 data/bank.js 로 바로,
+   배포본은 암호를 풀고 bank.enc 에서. 그래서 const 가 아니라 let 입니다. */
+let BANK = [], ROUNDS = [], EXAMS = [], BYID = {}, EXBY = {}, FRESH = [], RBY = {};
+
+/* ── 저장 ──────────────────────────────────────────────────── */
+const ST = load();
+function load(){
+  try{
+    return Object.assign({ sel:null, subj:null, wrong:[], run:null },
+                         JSON.parse(localStorage.getItem(CFG.storeKey)||'{}'));
+  }catch(e){ return { sel:null, subj:null, wrong:[], run:null }; }
+}
+function save(){ try{ localStorage.setItem(CFG.storeKey, JSON.stringify(ST)); }catch(e){} }
+
+/* 범위 = 회차(또는 예상문제 챕터) × 과목. 처음에는 전 범위. */
+const isOn = r => !!ST.sel[r.r] && !!ST.subj[r.u];
+function pool(){ return FRESH.filter(isOn); }
+function selCount(){ return pool().length; }
+/* 문항 이름표 — 「2019년 3회 12번 · 안전」 / 「예상문제 가스장치 · 81쪽 · 장치」 */
+function labOf(r){
+  const g = RBY[r.r] || { t:r.r, g:'' };
+  return (g.g === '기출' ? g.t + ' ' + r.n + '번' : '예상문제 ' + g.t + ' · ' + r.p + '쪽') + ' · ' + r.u;
+}
+
+/* ── 화면 전환 ─────────────────────────────────────────────── */
+let quiz = null, lastResult = null, ticker = null;
+
+document.querySelectorAll('.tab').forEach(t=>{ t.onclick = ()=> go(t.dataset.view); });
+function setTab(view){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on', x.dataset.view===view));
+}
+function go(view){ setTab(view); render(view); }
+function render(view){
+  /* 화면을 옮기면 시험 시계와 계산기는 끕니다 (시계가 겹쳐 두 번 돌던 사고 방지) */
+  if(ticker){ clearInterval(ticker); ticker = null; }
+  closeCalc();
+  const v = $('#view'); v.innerHTML = '';
+  if(!BANK.length) return renderNoBank(v);
+  if(view==='home')     return renderHome(v);
+  if(view==='practice') return enterQuiz(v,'practice');
+  if(view==='exam')     return enterQuiz(v,'exam');
+  if(view==='cbt')      return renderCbtHome(v);
+  if(view==='wrong')    return renderWrong(v);
+}
+function renderNoBank(v){
+  v.appendChild(el('<div class="card"><h3>문제은행을 불러오지 못했습니다</h3>'
+    + '<div class="muted">data/bank.js 가 없습니다. 도구 폴더에서 '
+    + '<code>python build_bank.py</code> 를 한 번 돌려 주세요.</div></div>'));
+}
+
+/* ── 홈 — 범위 고르기 ──────────────────────────────────────── */
+function renderHome(v){
+  /* 짝 도구(가스기능사 마스터 — 배우기·그림·게임)는 14번 칸에서 만들어지면 여기 링크를 겁니다 */
+  const nDup = BANK.length - FRESH.length;
+  v.appendChild(el(`<div class="card">
+    <h3>어디에서 낼까요?</h3>
+    <div class="muted">문제은행 ${BANK.length}문항 중 앞 회차와 <b>같은 문제 ${nDup}개</b>(복원 기출이라 반복이 많습니다)를 빼고
+      <b>${FRESH.length}문항</b>에서 냅니다. 🖥️ CBT 실전은 회차 60문항을 그대로 냅니다.</div>
+    <div class="row" style="margin-top:10px">
+      <span class="pill" id="selPill"></span>
+      <button class="btn btn-ghost" id="selAll">전체 선택</button>
+      <button class="btn btn-ghost" id="selNone">전체 해제</button>
+    </div>
+  </div>`));
+
+  /* 과목 */
+  const sj = el('<div class="card"><h3>과목</h3><div class="sjrow"></div></div>');
+  SUBJ.forEach(x=>{
+    const n = FRESH.filter(r => r.u === x.k).length;
+    sj.querySelector('.sjrow').appendChild(el(`<label><input type="checkbox" data-sj="${x.k}">
+      ${esc(x.t)} <span class="pill">${n}</span></label>`));
+  });
+  v.appendChild(sj);
+
+  /* 회차 — 기출 · 예상문제 두 묶음 */
+  ['기출','예상문제'].forEach(gname=>{
+    const list = ROUNDS.filter(g => g.g === gname);
+    if(!list.length) return;
+    const box = el(`<div class="card">
+      <div class="row"><h3 style="margin:0">${gname === '기출' ? '📅 기출 회차' : '📘 이론 예상문제'}</h3>
+        <button class="lnk" data-gall="1">모두</button><button class="lnk" data-gnone="1">비우기</button></div>
+      ${gname === '예상문제' ? '<div class="muted">교재 이론 챕터 사이 「예상문제」 상자입니다.</div>'
+                             : '<div class="muted">숫자는 「새 문제 / 60」 — 앞 회차와 같은 문제는 연습·종합에서 한 번만 냅니다.</div>'}
+      <div class="rgrid"></div></div>`);
+    list.forEach(g=>{
+      const n = FRESH.filter(r => r.r === g.k).length;
+      box.querySelector('.rgrid').appendChild(el(`<label><input type="checkbox" data-rk="${g.k}">
+        <span>${esc(g.t)} <span class="muted">${n}${gname === '기출' ? '/' + g.n : ''}</span></span></label>`));
+    });
+    box.querySelector('[data-gall]').onclick  = ()=>{ list.forEach(g => ST.sel[g.k] = true);  save(); sync(); };
+    box.querySelector('[data-gnone]').onclick = ()=>{ list.forEach(g => ST.sel[g.k] = false); save(); sync(); };
+    v.appendChild(box);
+  });
+
+  v.appendChild(el(`<div class="card row">
+    <button class="btn btn-primary" id="goP">✏️ 연습 ${CFG.practiceN}문항</button>
+    <button class="btn" id="goE">🏁 종합시험 ${CFG.examN}문항</button>
+    <span class="muted">연습은 고른 즉시 정답·해설을 보여 주고, 종합시험은 끝나야 채점합니다.</span>
+  </div>`));
+
+  if(ST.run){
+    const r = ST.run;
+    v.appendChild(el(`<div class="card">
+      <h3>풀던 것이 있습니다</h3>
+      <div class="muted">${r.mode==='exam'?'종합시험':'연습'} ${r.ids.length}문항 중 ${r.i+1}번 문제를 푸는 중입니다.</div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-primary" id="resume">이어 풀기</button>
+        <button class="btn" id="drop">버리기</button>
+      </div></div>`));
+    /* 홈에서 누르면 곧바로 풀던 문제로 — 묻는 화면을 한 번 더 보이지 않습니다 */
+    $('#resume').onclick = ()=>{
+      quiz = ST.run; setTab(r.mode);
+      const w = $('#view'); w.innerHTML = ''; drawQ(w);
+    };
+    $('#drop').onclick   = ()=>{ ST.run = null; save(); render('home'); };
+  }
+
+  function sync(){
+    v.querySelectorAll('[data-sj]').forEach(cb => cb.checked = !!ST.subj[cb.dataset.sj]);
+    v.querySelectorAll('[data-rk]').forEach(cb => cb.checked = !!ST.sel[cb.dataset.rk]);
+    const n = selCount();
+    $('#selPill').textContent = '고른 범위 ' + n + '문항';
+    $('#goP').disabled = $('#goE').disabled = (n === 0);
+  }
+  v.querySelectorAll('[data-sj]').forEach(cb=>{
+    cb.onchange = ()=>{ ST.subj[cb.dataset.sj] = cb.checked; save(); sync(); };
+  });
+  v.querySelectorAll('[data-rk]').forEach(cb=>{
+    cb.onchange = ()=>{ ST.sel[cb.dataset.rk] = cb.checked; save(); sync(); };
+  });
+  $('#selAll').onclick  = ()=>{ ROUNDS.forEach(g=>ST.sel[g.k]=true);  SUBJ.forEach(x=>ST.subj[x.k]=true); save(); sync(); };
+  $('#selNone').onclick = ()=>{ ROUNDS.forEach(g=>ST.sel[g.k]=false); save(); sync(); };
+  $('#goP').onclick = ()=> go('practice');
+  $('#goE').onclick = ()=> go('exam');
+  sync();
+}
+
+/* ── 문제 풀이 ──────────────────────────────────────────────
+   연습  : 고르는 즉시 정답·해설, 점수 실시간, 연출 있음
+   종합  : 아무것도 알려주지 않음, 점수 감춤, 연출 없음 (규약 2)     */
+function enterQuiz(v, mode){
+  /* 이어 풀기 — 같은 모드로 풀던 것이 있으면 먼저 물어봅니다 */
+  if(ST.run && ST.run.mode === mode){
+    const r = ST.run;
+    v.appendChild(el(`<div class="card">
+      <h3>${mode==='exam'?'종합시험':'연습'}을 풀던 중이었습니다</h3>
+      <div class="muted">${r.ids.length}문항 중 ${r.i+1}번 문제부터 이어서 풉니다.</div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-primary" id="rsm">이어 풀기</button>
+        <button class="btn" id="fresh">새로 시작</button>
+      </div></div>`));
+    $('#rsm').onclick   = ()=>{ quiz = ST.run; v.innerHTML=''; drawQ(v); };
+    $('#fresh').onclick = ()=>{ ST.run = null; save(); v.innerHTML=''; startQuiz(v, mode); };
+    return;
+  }
+  startQuiz(v, mode);
+}
+
+function startQuiz(v, mode){
+  const n  = mode==='exam' ? CFG.examN : CFG.practiceN;
+  const ps = shuffle(pool()).slice(0, n);
+  if(!ps.length){
+    v.appendChild(el(`<div class="card"><h3>고른 범위에 문항이 없습니다</h3>
+      <div class="muted">🏠 범위 고르기에서 회차와 과목을 하나 이상 골라 주세요.</div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-primary" id="toHome">범위 고르러 가기</button></div></div>`));
+    $('#toHome').onclick = ()=> go('home');
+    return;
+  }
+  quiz = {
+    mode, i:0, ids: ps.map(r=>r.i),
+    /* 보기 순서도 섞어 저장합니다 — 이어 풀어도 같은 순서가 나오게.
+       x 가 붙은 문항(해설이 보기 번호를 가리킴)은 책 순서 그대로 둡니다. */
+    ord: ps.map(r => r.x ? [0,1,2,3] : shuffle([0,1,2,3])),
+    picks: [], spent: 0, at: Date.now(),
+  };
+  ST.run = quiz; save();
+  drawQ(v);
+}
+
+function drawQ(v){
+  quiz.at = Date.now();                       // 이어 풀기용 — 시계를 다시 잡습니다
+  ST.run = quiz; save();                      // 문제를 넘길 때마다 저장 — 여기서 저장하지 않으면
+                                              // 창을 닫았다 열었을 때 한 문제 앞으로 되돌아간다
+  const r = BYID[quiz.ids[quiz.i]];
+  const ord = quiz.ord[quiz.i];
+  const isExam = quiz.mode === 'exam';
+  const nCorrect = quiz.picks.filter(p=>p.ok).length;
+  v.innerHTML = '';
+  v.appendChild(el(`<div class="progress"><i style="width:${quiz.i/quiz.ids.length*100}%"></i></div>`));
+  const card = el(`<div class="card">
+      <div class="qnum">${quiz.i+1} / ${quiz.ids.length}
+        ${isExam ? '<span class="pill" style="margin-left:6px">채점은 마지막에</span>'
+                 : '<span class="pill ok" style="margin-left:6px">' + nCorrect + '개 맞힘</span>'}
+        <span class="pill" style="margin-left:6px">${isExam?'종합시험':'연습'}</span>
+      </div>
+      <div class="qtext">${esc(r.q)}</div>
+      <div id="chs"></div>
+      <div id="exp"></div>
+    </div>`);
+  v.appendChild(card);
+
+  const chs = card.querySelector('#chs');
+  ord.forEach((src, idx)=>{
+    const b = el('<button class="choice">' + (idx+1) + '. ' + esc(r.o[src]) + '</button>');
+    b.onclick = ()=> pick(v, idx, b);
+    chs.appendChild(b);
+  });
+}
+
+function pick(v, idx, btn){
+  const r   = BYID[quiz.ids[quiz.i]];
+  const ord = quiz.ord[quiz.i];
+  const src = ord[idx];                         // 화면의 idx → 책의 보기 번호
+  const ok  = src === r.a;
+  const shownAnswer = ord.indexOf(r.a);         // 정답이 화면에서 몇 번째인가
+
+  /* 푼 자리에 덮어씁니다(push 가 아니라) — 이어 풀기로 같은 문제를 다시 풀 때
+     답이 두 번 쌓여 문항 수보다 많아지는 일을 막습니다 */
+  quiz.picks[quiz.i] = { id:r.i, src, ok };
+  quiz.spent += Math.round((Date.now() - quiz.at)/1000);
+  if(!ok) pushWrong(r, ord, src);
+  ST.run = quiz; save();
+
+  if(quiz.mode === 'exam'){                     // 종합시험 — 아무 표시 없이 다음 문제로
+    quiz.i++;
+    if(quiz.i >= quiz.ids.length) return finish(v);
+    return drawQ(v);
+  }
+
+  /* 연습 — 정답·해설 즉시 공개 + 연출 */
+  document.querySelectorAll('.choice').forEach((b,i)=>{
+    b.disabled = true;
+    if(i === shownAnswer) b.classList.add('correct');
+    if(i === idx) b.classList.add('picked', ok ? 'correct' : 'wrong');
+  });
+  try{ if(window.FX) ok ? FX.ok(btn) : FX.no(btn); }catch(e){ console.warn('FX', e); }
+
+  const exp = document.querySelector('#exp');
+  exp.appendChild(el(`<div class="explain">
+      <b>${ok ? '맞았습니다' : '정답은 ' + (shownAnswer+1) + '번'}</b><br>${esc(r.e)}
+      <div class="muted" style="margin-top:6px">${esc(labOf(r))} · 교재 ${r.p}쪽</div>${figHtml(r.i)}
+    </div>`));
+  const next = el('<div class="row" style="margin-top:12px"><button class="btn btn-primary">'
+    + (quiz.i+1 >= quiz.ids.length ? '결과 보기' : '다음 문제 →') + '</button></div>');
+  exp.appendChild(next);
+  next.querySelector('button').onclick = ()=>{
+    quiz.i++;
+    if(quiz.i >= quiz.ids.length) return finish(v);
+    drawQ(v);
+  };
+}
+
+/* 오답노트에 쌓기 — 화면에 보였던 보기 순서 그대로 남깁니다 */
+function pushWrong(r, ord, src, lab){
+  ST.wrong = ST.wrong.filter(w => w.id !== r.i);
+  ST.wrong.unshift({ id:r.i, lab: lab || labOf(r), p:r.p, q:r.q,
+                     o: ord.map(k => r.o[k]),
+                     a: ord.indexOf(r.a), pick: ord.indexOf(src),
+                     e: r.e, at: Date.now() });
+  ST.wrong = ST.wrong.slice(0, 200);
+  save();
+}
+
+/* ── 끝난 뒤 ───────────────────────────────────────────────── */
+function finish(v){
+  const n    = quiz.ids.length;
+  const cor  = quiz.picks.filter(p=>p.ok).length;
+  const pct  = Math.round(cor / n * 100);
+  const sec  = quiz.spent;
+  const part = quiz.mode === 'exam' ? '종합시험' : '연습';
+  const pass = pct >= CFG.passScore;
+  const mode = quiz.mode;
+
+  ST.run = null; save();                        // 끝났으니 이어 풀기 기록은 지웁니다
+
+  v.innerHTML = '';
+  v.appendChild(el(`<div class="card" style="text-align:center">
+      <div class="score">${pct}점</div>
+      <div class="muted">${n}문항 중 ${cor}개 정답 · ${Math.floor(sec/60)}분 ${sec%60}초</div>
+      <div style="margin-top:8px"><span class="pill ${pass?'ok':'no'}">${pass?'합격선(60점) 넘었습니다':'합격선 60점까지 조금 더'}</span></div>
+      <div id="rankBox" style="margin-top:12px"></div>
+      <div id="rSubmitAnchor" style="margin-top:12px"></div>
+    </div>`));
+
+  /* 오답노트 — 종합시험은 여기서 처음으로 정답을 봅니다 (규약 2) */
+  const bad = quiz.picks.map((p,k)=>({p, k})).filter(x=>!x.p.ok);
+  if(bad.length){
+    v.appendChild(el(`<div class="card"><h3>📕 틀린 문제 ${bad.length}개</h3>
+      <div class="muted">여기 있는 문제는 📕 오답노트 탭에도 쌓였습니다.</div></div>`));
+    bad.forEach(({p,k})=>{
+      const r = BYID[p.id], ord = quiz.ord[k];
+      v.appendChild(el(`<div class="card">
+        <span class="pill">${esc(labOf(r))}</span>
+        <div class="qtext">${esc(r.q)}</div>
+        <div class="muted">내가 고른 답 : ${ord.indexOf(p.src)+1}. ${esc(r.o[p.src])}</div>
+        <div style="color:var(--ok);font-weight:700">정답 : ${ord.indexOf(r.a)+1}. ${esc(r.o[r.a])}</div>
+        <div class="explain">${esc(r.e)}</div>${figHtml(r.i)}
+      </div>`));
+    });
+  }
+
+  v.appendChild(el(`<div class="card row">
+      <button class="btn btn-primary" id="again">한 번 더</button>
+      <button class="btn" id="home2">🏠 범위 고르기</button></div>`));
+  $('#again').onclick = ()=> render(mode);
+  $('#home2').onclick = ()=> go('home');
+
+  /* 제출을 먼저 붙입니다 — 연출·계급에서 오류가 나도 제출 버튼은 살아 있어야 합니다 */
+  mountSubmit(pct, cor, n, sec, part, bad);
+
+  try{
+    /* 배너·파티클은 연습에만 (규약 2 — 종합시험은 연출 없음) */
+    if(window.FX && mode !== 'exam' && pass){
+      FX.banner({ title: pct>=90 ? '훌륭합니다!' : '통과!', sub: part + ' ' + pct + '점',
+                  stars: FX.starsFor ? FX.starsFor(pct) : 0 });
+    }
+  }catch(e){ console.warn('FX', e); }
+  try{
+    if(window.Rank){
+      const res = Rank.award(pct, { mode: TOOL + ' — ' + part });
+      $('#rankBox').innerHTML = Rank.resultBox(res);
+    }
+  }catch(e){ console.warn('Rank', e); }
+}
+
+/* ── 결과 제출 (규약 1) ──
+   mode 는 파트마다 다르게, wrong 은 번호가 아니라 "무엇을 틀렸는지"  */
+function mountSubmit(pct, correct, total, sec, part, bad){
+  const sjs = SUBJ.map(x => x.k).filter(k => quiz.ids.some(id => BYID[id].u === k));
+  const rds = [...new Set(quiz.ids.map(id => (RBY[BYID[id].r]||{}).t || BYID[id].r))];
+  lastResult = {
+    mode  : TOOL + ' — ' + part,
+    score : pct, correct, total,
+    wrong : bad.map(({p})=>{
+      const r = BYID[p.id];
+      return labOf(r) + ' ' + r.q.slice(0,26) + '… → 정답 「' + r.o[r.a].slice(0,18) + '」';
+    }),
+    durationSec : sec,
+  };
+  const anchor = $('#rSubmitAnchor');
+  if(!(window.ResultCollector && ResultCollector.attach) || !anchor) return;
+  const btn = ResultCollector.attach(anchor, ()=>lastResult, {
+    id:'rcBtn', className:'btn btn-primary',
+    mode: lastResult.mode,
+    extra: [TOOL + ' ' + part + ' ' + pct + '점', '과목 ' + sjs.join('·') + ' · 회차 ' + (rds.length > 4 ? rds.length + '개' : rds.join('·'))],
+  });
+  if(btn){ btn.style.width='100%'; btn.textContent = '📤 [' + part + '] 결과 제출'; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CBT 실전 — 60문항 · 60분
+   한국산업인력공단 CBT 시험 화면을 본떴습니다.
+     글자 크기(기본/확대) · 화면 배치(1단/2단/3단) · 계산기 ·
+     제한 시간 60분과 남은 시간 · 오른쪽 답안 표기란
+
+   시험 중에는 점수·정답·해설·효과음을 전부 감춥니다(규약 2).
+   fx.js 연출과 rank.js 계급도 붙이지 않습니다 — 연습 모드에만 붙입니다.
+
+   회차는 책에 실린 순서 그대로 60문항을 냅니다(실제 시험지 재현).
+   다만 보기는 섞습니다 — 안 섞으면 같은 문제가 회차마다 반복돼 '번호 외우기'가 됩니다.
+   해설이 보기 번호를 가리키는 문항(x)만 책 순서로 둡니다.
+   회차 이름(ST.cbt.n)은 '2019-3' 같은 회차 키입니다.
+   ══════════════════════════════════════════════════════════════ */
+/* 화면 안 알림창 — 브라우저 confirm 창은 수업 중에 흐름을 끊고
+   기기에 따라 막히기도 해서, 시험 화면에서는 이것만 씁니다. */
+function ask(title, msg, okLabel, onOk){
+  const ov = el(`<div class="ovl"><div class="box">
+      <h3>${esc(title)}</h3><div class="msg">${esc(msg)}</div>
+      <div class="row" style="margin-top:14px;justify-content:flex-end">
+        <button class="btn" id="askNo">취소</button>
+        <button class="btn btn-primary" id="askYes">${esc(okLabel)}</button>
+      </div></div></div>`);
+  document.body.appendChild(ov);
+  ov.querySelector('#askNo').onclick  = ()=> ov.remove();
+  ov.querySelector('#askYes').onclick = ()=>{ ov.remove(); onOk(); };
+}
+
+const CBT_MIN = 60;                       // 제한 시간(분)
+const exT = k => { const e = EXAMS.find(x => x.k === k); return e ? e.t : k; };   // '2019-3' → '2019년 3회'
+const mmss = ms => {
+  const s = Math.max(0, Math.round(ms/1000));
+  return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+};
+
+function renderCbtHome(v){
+  if(!EXAMS.length){
+    v.appendChild(el('<div class="card"><h3>CBT 회차가 없습니다</h3>'
+      + '<div class="muted">data/bank.js 를 다시 구워 주세요(<code>python build_bank.py</code>).</div></div>'));
+    return;
+  }
+  v.appendChild(el(`<div class="card">
+    <h3>실제 시험처럼 풀어 봅니다</h3>
+    <div class="muted">한 회 <b>60문항 · 60분</b>, 합격선 60점(36문항)입니다. 교재에 실린 기출 회차를 책 번호 순서 그대로 냅니다.
+      시험 중에는 점수·정답·해설이 전혀 보이지 않습니다. 시간이 다 되면 그때까지 고른 답으로 채점합니다.</div>
+  </div>`));
+
+  if(ST.cbt){
+    const r = ST.cbt, left = r.endAt - Date.now();
+    const done = r.answers.filter(x => x !== null).length;
+    v.appendChild(el(`<div class="card">
+      <h3>보던 시험이 있습니다 — ${esc(exT(r.n))}</h3>
+      <div class="muted">${done} / 60문항 표기 · 남은 시간 ${left > 0 ? mmss(left) : '0분 (시간 끝남)'}</div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-primary" id="cbtRsm">${left > 0 ? '이어서 보기' : '지금까지 답으로 채점하기'}</button>
+        <button class="btn" id="cbtDrop">버리기</button>
+      </div>
+      <div class="muted" style="margin-top:6px">남은 시간은 실제로 흐른 시간 기준입니다 — 창을 닫아 두어도 시계는 갑니다.</div>
+    </div>`));
+    $('#cbtRsm').onclick = ()=>{
+      if(ST.cbt.endAt - Date.now() <= 0) return gradeCbt(true);
+      drawCbt();
+    };
+    $('#cbtDrop').onclick = ()=> ask('보던 시험을 버릴까요?',
+      '표기한 답은 사라집니다.', '버리기', ()=>{ ST.cbt = null; save(); render('cbt'); });
+  }
+
+  const box = el(`<div class="card"><h3>회차 고르기 <span class="muted">— 기출 ${EXAMS.length}회</span></h3>
+      <div class="cbtgrid"></div></div>`);
+  EXAMS.forEach(e=>{
+    const b = el(`<button class="btn cbtpick" data-start="${e.n}">
+      <b>${esc(e.t)}</b><span class="muted">교재 ${e.p}쪽</span></button>`);
+    b.onclick = ()=> startCbt(e.n);
+    box.querySelector('.cbtgrid').appendChild(b);
+  });
+  v.appendChild(box);
+}
+
+function startCbt(n){
+  if(ST.cbt) return ask('보던 시험이 있습니다',
+    '새로 시작하면 표기한 답이 사라집니다.', '새로 시작', ()=>{ ST.cbt = null; startCbt(n); });
+  const ex = EXAMS.find(e => e.n === n);
+  ST.cbt = {
+    n, ids: ex.items.map(r => r.i),
+    ord: ex.items.map(r => r.x ? [0,1,2,3] : shuffle([0,1,2,3])),
+    answers: ex.items.map(()=>null),      // 화면에 보이는 보기 번호(0~3)
+    marks  : ex.items.map(()=>false),     // 다시 볼 문제 표시
+    page:0, cols:1, big:false,
+    startAt: Date.now(), endAt: Date.now() + CBT_MIN*60*1000,
+  };
+  save();
+  drawCbt();
+}
+
+/* 한 화면에 보이는 문항 = 화면 배치(1단·2단·3단) */
+function cbtSlice(){
+  const r = ST.cbt, per = r.cols;
+  const from = r.page * per;
+  return { from, to: Math.min(from + per, r.ids.length), per };
+}
+
+function drawCbt(){
+  const r = ST.cbt;
+  if(!r) return render('cbt');
+  setTab('cbt');
+  const v = $('#view'); v.innerHTML = '';
+  if(ticker){ clearInterval(ticker); ticker = null; }
+
+  const stu = (()=>{ try{ return JSON.parse(localStorage.getItem('rc_student')||'{}'); }catch(e){ return {}; } })();
+  const who = (stu.cls ? stu.cls + '반 ' : '') + (stu.num ? stu.num + '번 ' : '') + (stu.name || '');
+
+  const bar = el(`<div class="exbar">
+    <div class="grp"><span class="lb">${esc(exT(r.n))}</span></div>
+    <div class="grp"><span class="lb">수험자</span>
+      <span style="font-size:13px;font-weight:700">${esc(who || '이름은 제출할 때 적습니다')}</span></div>
+    <div class="grp"><span class="lb">글자 크기</span>
+      <button class="sbtn" data-big="0">기본</button><button class="sbtn" data-big="1">확대</button></div>
+    <div class="grp"><span class="lb">화면 배치</span>
+      <button class="sbtn" data-cols="1">1단</button>
+      <button class="sbtn" data-cols="2">2단</button>
+      <button class="sbtn" data-cols="3">3단</button></div>
+    <div class="grp"><button class="sbtn" id="calcBtn">🧮 계산기</button></div>
+    <div class="clock" id="clock">남은 시간 --:--</div>
+  </div>`);
+  v.appendChild(bar);
+
+  const grid = el('<div class="exgrid"></div>');
+  const qcol = el(`<div class="qcol exam c${r.cols} ${r.big?'big':''}"></div>`);
+  const omr  = el(`<div class="omr"><h4>답안 표기란</h4><div class="rows"></div>
+      <div class="muted" style="text-align:center;margin-top:6px;font-size:11px">🔖 는 다시 볼 문제</div></div>`);
+  grid.appendChild(qcol); grid.appendChild(omr);
+  v.appendChild(grid);
+
+  /* ── 문제 ── */
+  const { from, to } = cbtSlice();
+  for(let i = from; i < to; i++){
+    const q = EXBY[r.ids[i]], ord = r.ord[i];
+    const box = el(`<div class="card" data-qi="${i}">
+        <div class="qnum">${String(i+1).padStart(2,'0')}번
+          <button class="mk ${r.marks[i]?'on':''}" data-mark="${i}" title="다시 볼 문제">🔖</button></div>
+        <div class="qtext">${esc(q.q)}</div>
+        <div class="chs"></div>
+      </div>`);
+    const chs = box.querySelector('.chs');
+    ord.forEach((src, idx)=>{
+      const b = el('<button class="choice' + (r.answers[i]===idx ? ' sel' : '') + '" data-ci="'
+                 + i + '-' + idx + '">' + (idx+1) + '. ' + esc(q.o[src]) + '</button>');
+      b.onclick = ()=> markAnswer(i, idx);
+      chs.appendChild(b);
+    });
+    box.querySelector('[data-mark]').onclick = ()=> toggleMark(i);
+    qcol.appendChild(box);
+  }
+
+  /* ── 답안 표기란 — 여기서도 답을 고를 수 있습니다 ── */
+  const rows = omr.querySelector('.rows');
+  r.ids.forEach((id, i)=>{
+    const row = el(`<div class="r ${(i>=from && i<to)?'cur':''}">
+        <button class="mk ${r.marks[i]?'on':''}" data-omk="${i}">🔖</button>
+        <button class="n" data-jump="${i}" title="${i+1}번으로">${String(i+1).padStart(2,'0')}</button></div>`);
+    for(let k=0;k<4;k++){
+      const b = el('<button class="bub' + (r.answers[i]===k ? ' on' : '') + '" data-ob="'+i+'-'+k+'">'
+                 + (k+1) + '</button>');
+      b.onclick = ()=> markAnswer(i, k);
+      row.appendChild(b);
+    }
+    row.querySelector('[data-omk]').onclick = ()=> toggleMark(i);
+    row.querySelector('[data-jump]').onclick = ()=>{ r.page = Math.floor(i / r.cols); save(); drawCbt(); };
+    rows.appendChild(row);
+  });
+
+  /* ── 아래 단추 ── */
+  const pages = Math.ceil(r.ids.length / r.cols);
+  const nav = el(`<div class="card row">
+      <button class="btn" id="prev" ${r.page===0?'disabled':''}>← 이전</button>
+      <button class="btn" id="next" ${r.page>=pages-1?'disabled':''}>다음 →</button>
+      <span class="muted">${from+1}~${to}번 / 60문항 · 표기 <b id="doneN">0</b>개</span>
+      <button class="btn btn-primary" id="submit" style="margin-left:auto">답안 제출</button>
+    </div>`);
+  v.appendChild(nav);
+  $('#prev').onclick = ()=>{ r.page--; save(); drawCbt(); };
+  $('#next').onclick = ()=>{ r.page++; save(); drawCbt(); };
+  $('#submit').onclick = ()=> askSubmit();
+  $('#calcBtn').onclick = ()=> toggleCalc();
+
+  bar.querySelectorAll('[data-big]').forEach(b=>{
+    b.classList.toggle('on', String(r.big?1:0) === b.dataset.big);
+    b.onclick = ()=>{ r.big = b.dataset.big === '1'; save(); drawCbt(); };
+  });
+  bar.querySelectorAll('[data-cols]').forEach(b=>{
+    b.classList.toggle('on', String(r.cols) === b.dataset.cols);
+    b.onclick = ()=>{
+      const first = r.page * r.cols;                 // 보던 문제가 그대로 보이게 쪽을 다시 셉니다
+      r.cols = +b.dataset.cols;
+      r.page = Math.floor(first / r.cols);
+      save(); drawCbt();
+    };
+  });
+
+  countDone();
+  tickClock();
+  ticker = setInterval(tickClock, 1000);
+}
+
+/* 답을 표기해도 화면을 다시 그리지 않습니다 — 다시 그리면 스크롤이 맨 위로 튑니다.
+   문제 쪽 보기 단추와 오른쪽 답안 표기란 두 곳만 칠합니다. */
+function markAnswer(i, idx){
+  const r = ST.cbt;
+  r.answers[i] = idx;
+  save();
+  document.querySelectorAll('[data-ob^="' + i + '-"]').forEach(b=>{
+    b.classList.toggle('on', b.dataset.ob === i + '-' + idx);
+  });
+  document.querySelectorAll('[data-ci^="' + i + '-"]').forEach(b=>{
+    b.classList.toggle('sel', b.dataset.ci === i + '-' + idx);
+  });
+  countDone();
+}
+function toggleMark(i){
+  const r = ST.cbt;
+  r.marks[i] = !r.marks[i];
+  save();
+  document.querySelectorAll('[data-mark="'+i+'"], [data-omk="'+i+'"]')
+    .forEach(b => b.classList.toggle('on', r.marks[i]));
+}
+function countDone(){
+  const n = ST.cbt.answers.filter(x => x !== null).length;
+  const t = $('#doneN'); if(t) t.textContent = n;
+}
+
+function tickClock(){
+  const r = ST.cbt; if(!r) return;
+  const left = r.endAt - Date.now();
+  const c = $('#clock');
+  if(c){
+    c.textContent = '제한 ' + CBT_MIN + '분 · 남은 시간 ' + mmss(left);
+    c.classList.toggle('warn', left <= 5*60*1000);
+  }
+  if(left <= 0){
+    clearInterval(ticker); ticker = null;
+    gradeCbt(true);                 // 결과 화면에 '시간 종료'로 표시됩니다
+  }
+}
+
+function askSubmit(){
+  const r = ST.cbt;
+  const blank = r.answers.filter(x => x === null).length;
+  const marks = r.marks.filter(Boolean).length;
+  let msg = blank ? '아직 표기하지 않은 문제가 ' + blank + '개 있습니다.'
+                  : '60문항을 모두 표기했습니다.';
+  if(marks) msg += '\n🔖 다시 볼 문제로 표시한 것이 ' + marks + '개 있습니다.';
+  msg += '\n제출하면 채점되고 다시 풀 수 없습니다.';
+  ask('답안을 제출할까요?', msg, '제출', ()=> gradeCbt(false));
+}
+
+/* ── 채점 — 여기서 처음으로 정답을 봅니다 ── */
+function gradeCbt(timeUp){
+  const r = ST.cbt;
+  if(ticker){ clearInterval(ticker); ticker = null; }
+  closeCalc();
+  const sec = Math.round((Math.min(Date.now(), r.endAt) - r.startAt)/1000);
+  const bad = [];
+  let cor = 0;
+  r.ids.forEach((id, i)=>{
+    const q = EXBY[id], ord = r.ord[i], sel = r.answers[i];
+    const ok = sel !== null && ord[sel] === q.a;
+    if(ok) cor++;
+    else {
+      bad.push({ q, ord, sel, i });
+      pushWrong(q, ord, sel === null ? -1 : ord[sel], 'CBT ' + exT(r.n) + ' ' + (i+1) + '번 · ' + q.u + ' · ' + q.p + '쪽');
+    }
+  });
+  const pct  = Math.round(cor / r.ids.length * 100);
+  const pass = pct >= CFG.passScore;
+  const n = r.n;
+  const bySj = SUBJ.map(x => {
+    const its = r.ids.map((id, i) => ({ q: EXBY[id], i })).filter(o => o.q.u === x.k);
+    const ok  = its.filter(o => r.answers[o.i] !== null && r.ord[o.i][r.answers[o.i]] === o.q.a).length;
+    return { t: x.t, k: x.k, n: its.length, ok };
+  });
+  const sjLine = bySj.map(b => b.k + ' ' + b.ok + '/' + b.n).join(' · ');
+  ST.cbt = null; save();
+
+  setTab('cbt');
+  const v = $('#view'); v.innerHTML = '';
+  v.appendChild(el(`<div class="card" style="text-align:center">
+      <span class="pill">${esc(exT(n))} CBT 실전${timeUp ? ' · 시간 종료' : ''}</span>
+      <div class="score" style="margin-top:6px">${pct}점</div>
+      <div class="muted">60문항 중 ${cor}개 정답 · ${Math.floor(sec/60)}분 ${sec%60}초</div>
+      <div style="margin-top:8px"><span class="pill ${pass?'ok':'no'}">
+        ${pass ? '합격 (60점 이상)' : '불합격 — 합격선 60점(36문항)'}</span></div>
+      <table class="sjtbl"><tr><th>과목</th><th>문항</th><th>맞힘</th></tr>
+        ${bySj.map(b => `<tr><td>${esc(b.t)}</td><td>${b.n}</td><td><b>${b.ok}</b></td></tr>`).join('')}</table>
+      <div class="muted" style="margin-top:4px">과목은 문제 내용으로 나눈 것입니다(복원 기출이라 문제지 순서가 과목 순서가 아님).</div>
+      <div id="rSubmitAnchor" style="margin-top:12px"></div>
+    </div>`));
+
+  /* 결과 제출 (규약 1) */
+  lastResult = {
+    mode  : TOOL + ' — CBT 실전 ' + exT(n),
+    score : pct, correct: cor, total: r.ids.length,
+    wrong : bad.map(b => (b.i+1) + '번 ' + b.q.q.slice(0,24) + '… → 정답 「' + b.q.o[b.q.a].slice(0,18) + '」'),
+    durationSec : sec,
+  };
+  const anchor = $('#rSubmitAnchor');
+  if(window.ResultCollector && ResultCollector.attach && anchor){
+    const btn = ResultCollector.attach(anchor, ()=>lastResult, {
+      id:'rcBtn', className:'btn btn-primary',
+      mode: lastResult.mode,
+      extra: [TOOL + ' CBT 실전 ' + exT(n) + ' ' + pct + '점', pass ? '합격선 통과' : '합격선 미만', sjLine],
+    });
+    if(btn){ btn.style.width='100%'; btn.textContent = `📤 [CBT 실전 ${exT(n)}] 결과 제출`; }
+  }
+
+  /* 오답노트 */
+  if(bad.length){
+    v.appendChild(el(`<div class="card"><h3>📕 틀린 문제 ${bad.length}개</h3>
+      <div class="muted">표기하지 않은 문제도 여기에 들어옵니다. 📕 오답노트 탭에도 쌓였습니다.</div></div>`));
+    bad.forEach(({q, ord, sel, i})=>{
+      v.appendChild(el(`<div class="card">
+        <span class="pill">${i+1}번 · ${q.u} · 교재 ${q.p}쪽</span>
+        <div class="qtext">${esc(q.q)}</div>
+        <div class="muted">내가 고른 답 : ${sel === null ? '표기 안 함' : (sel+1) + '. ' + esc(q.o[ord[sel]])}</div>
+        <div style="color:var(--ok);font-weight:700">정답 : ${ord.indexOf(q.a)+1}. ${esc(q.o[q.a])}</div>
+        <div class="explain">${esc(q.e)}</div>${figHtml(q.i)}
+      </div>`));
+    });
+  }
+  v.appendChild(el(`<div class="card row">
+      <button class="btn btn-primary" id="cbtBack">🖥️ 다른 회차 보기</button>
+      <button class="btn" id="cbtHome">🏠 범위 고르기</button></div>`));
+  $('#cbtBack').onclick = ()=> go('cbt');
+  $('#cbtHome').onclick = ()=> go('home');
+}
+
+/* ── 계산기 — 실제 시험 화면에 있는 것 ── */
+let calcSt = null;
+function closeCalc(){
+  const c = document.getElementById('calcBox'); if(c) c.remove();
+  calcSt = null;
+}
+function toggleCalc(){
+  if(document.getElementById('calcBox')) return closeCalc();
+  calcSt = { cur:'0', acc:null, op:null, fresh:true };
+  const keys = ['C','←','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','0','.','=',''];
+  const box = el(`<div class="calc" id="calcBox">
+      <div class="disp" id="calcDisp">0</div><div class="pad"></div>
+      <button class="sbtn" id="calcClose" style="width:100%;margin-top:6px">닫기</button>
+    </div>`);
+  const pad = box.querySelector('.pad');
+  keys.forEach(k=>{
+    if(!k){ pad.appendChild(el('<span></span>')); return; }
+    const b = el('<button>' + k + '</button>');
+    b.onclick = ()=> calcKey(k);
+    pad.appendChild(b);
+  });
+  box.querySelector('#calcClose').onclick = closeCalc;
+  document.body.appendChild(box);
+}
+function calcKey(k){
+  const s = calcSt; if(!s) return;
+  const disp = ()=>{ const d = document.getElementById('calcDisp'); if(d) d.textContent = s.cur; };
+  const num = v => parseFloat(v || '0');
+  const apply = ()=>{
+    if(s.op === null || s.acc === null) return num(s.cur);
+    const a = s.acc, b = num(s.cur);
+    const r = s.op==='+' ? a+b : s.op==='−' ? a-b : s.op==='×' ? a*b
+            : s.op==='÷' ? (b===0 ? NaN : a/b) : b;
+    return r;
+  };
+  if(k === 'C'){ calcSt = { cur:'0', acc:null, op:null, fresh:true }; return disp(); }
+  if(k === '←'){ s.cur = s.cur.length>1 ? s.cur.slice(0,-1) : '0'; return disp(); }
+  if(k === '%'){ s.cur = String(num(s.cur)/100); s.fresh = true; return disp(); }
+  if('+−×÷'.indexOf(k) >= 0){
+    const r = apply();
+    s.acc = isNaN(r) ? null : r; s.op = k; s.fresh = true;
+    s.cur = s.acc === null ? '오류' : String(+r.toFixed(10));
+    return disp();
+  }
+  if(k === '='){
+    const r = apply();
+    s.cur = isNaN(r) ? '오류' : String(+r.toFixed(10));
+    s.acc = null; s.op = null; s.fresh = true;
+    return disp();
+  }
+  if(k === '.'){
+    if(s.fresh){ s.cur = '0.'; s.fresh = false; }
+    else if(s.cur.indexOf('.') < 0) s.cur += '.';
+    return disp();
+  }
+  if(s.fresh || s.cur === '0' || s.cur === '오류'){ s.cur = k; s.fresh = false; }
+  else s.cur += k;
+  disp();
+}
+
+/* ── 오답노트 (쌓인 것) ────────────────────────────────────── */
+function renderWrong(v){
+  if(!ST.wrong.length){
+    v.appendChild(el('<div class="empty">🗒️ 아직 오답이 없어요!<br>연습이나 종합시험을 풀면 여기에 모입니다.</div>'));
+    return;
+  }
+  v.appendChild(el(`<div class="card row">
+      <b>${ST.wrong.length}문항</b>
+      <span class="muted">틀린 문제만 모았습니다. 같은 문제를 또 틀리면 맨 위로 올라옵니다.</span>
+      <button class="btn" id="clrWrong">비우기</button></div>`));
+  $('#clrWrong').onclick = ()=> ask('오답노트를 비울까요?',
+    '쌓인 오답이 모두 지워집니다.', '비우기', ()=>{ ST.wrong = []; save(); render('wrong'); });
+  ST.wrong.forEach(w=>{
+    v.appendChild(el(`<div class="card">
+      <span class="pill">${esc(w.lab || (w.p + '쪽'))}</span>
+      <div class="qtext">${esc(w.q)}</div>
+      <div class="muted">내가 고른 답 : ${w.pick < 0 ? '표기 안 함' : (w.pick+1) + '. ' + esc(w.o[w.pick])}</div>
+      <div style="color:var(--ok);font-weight:700">정답 : ${w.a+1}. ${esc(w.o[w.a])}</div>
+      <div class="explain">${esc(w.e)}</div>${figHtml(w.id)}
+    </div>`));
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   암호 잠금 — 시중 교재 문항이라 파일 자체를 잠갔습니다
+
+   정적 호스팅(GitHub Pages)에서는 화면에 비밀번호 칸만 두면 보호가 되지 않습니다.
+   데이터 파일 주소를 직접 치면 그대로 받아지기 때문입니다.
+   그래서 bank.enc 를 AES-GCM 으로 실제 암호화해 올리고 여기서 WebCrypto 로 풉니다.
+   (굽는 것은 build_lock.py — 이 파일에는 암호도 열쇠도 없습니다)
+
+   암호는 두 가지입니다.
+     교사용 — 문구형, 만료 없음. 열면 그 주 학생 코드가 화면에 나옵니다.
+     학생용 — 8자리 숫자, 그 주 월요일 ~ 다음 월요일 7일만.
+   기간은 암호문 '안에' 들어 있어 이 파일을 고쳐도 넘길 수 없습니다.
+
+   한 번 연 기기는 다음부터 그냥 열리고, 같은 주소의 다른 도구도 함께 풀립니다.
+   ══════════════════════════════════════════════════════════════ */
+const LOCK_KEY = 'gascbt_v1_pw', SHARED_KEY = 'hong_pw_v1';
+const b64 = x => Uint8Array.from(atob(x), c => c.charCodeAt(0));
+const isoOf = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0')
+                                   + '-' + String(d.getDate()).padStart(2,'0');
+const mondayOf = d => { const x = new Date(d); x.setDate(x.getDate() - ((x.getDay()+6)%7));
+                        x.setHours(0,0,0,0); return x; };
+
+/* 문제은행이 들어왔을 때 화면을 세웁니다 (평문이든 푼 것이든 여기 한 곳으로) */
+function boot(){
+  BANK   = window.GAS_BANK   || [];
+  ROUNDS = window.GAS_ROUNDS || [];
+  EXAMS  = window.GAS_EXAMS  || [];
+  BYID = {}; BANK.forEach(r => BYID[r.i] = r);
+  RBY  = {}; ROUNDS.forEach(g => RBY[g.k] = g);
+  EXAMS.forEach(e => { e.n = e.k; e.items = e.ids.map(id => BYID[id]).filter(Boolean); });
+  EXBY = BYID;                                     // CBT 회차 문항도 같은 문제은행 안에 있습니다
+  FRESH = BANK.filter(r => !r.d);                  // 출제 대상 = 중복 표시(d) 없는 문항
+  if(!ST.sel || !Object.keys(ST.sel).length){      // 처음에는 전 범위
+    ST.sel = {}; ROUNDS.forEach(g => ST.sel[g.k] = true); save();
+  }
+  ROUNDS.forEach(g => { if(!(g.k in ST.sel)) ST.sel[g.k] = true; });   // 나중에 늘어난 챕터도 켜 둡니다
+  if(!ST.subj){ ST.subj = {}; SUBJ.forEach(x => ST.subj[x.k] = true); save(); }
+  $('#hdSub').textContent = BANK.length
+    ? '기출 ' + EXAMS.length + '회 · 문제은행 ' + BANK.length + '문항'
+    : '문제은행을 불러오지 못했습니다';
+  render('home');
+}
+
+function lockScreen(msg, cls){
+  document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
+  const v = $('#view');
+  v.innerHTML = '';
+  v.appendChild(el(`<div class="card">
+    <h3>🔒 암호를 넣어 주세요</h3>
+    <div class="muted">시중 교재(「나합격 가스기능사 필기」, 삼원북스)의 기출문항이라
+      수업 목적으로만 열 수 있게 파일 자체를 잠갔습니다.
+      <b id="lockN"></b></div>
+    <div class="row" style="margin-top:12px">
+      <input id="lockPw" type="password" placeholder="암호 또는 8자리 코드"
+             style="flex:1;min-width:180px;padding:11px 12px;font-size:16px;
+                    border:1px solid var(--line);border-radius:10px">
+      <button class="btn btn-primary" id="lockGo">열기</button>
+    </div>
+    <div id="lockMsg" class="muted" style="margin-top:10px;min-height:20px"></div>
+    <div class="muted" style="margin-top:10px">한 번 연 기기는 다음부터 그냥 열립니다.
+      학생은 선생님께 이번 주 코드를 받으세요.</div>
+  </div>`));
+  $('#lockGo').onclick = ()=> unlock($('#lockPw').value.replace(/\s+/g,''));
+  $('#lockPw').addEventListener('keydown', e => { if(e.key === 'Enter') $('#lockGo').click(); });
+  if(msg) say(msg, cls);
+  fetch('bank.enc', {cache:'no-store'}).then(r => r.json())
+    .then(b => { $('#lockN').textContent = (b.n || '') + '문항'; })
+    .catch(()=>{ $('#lockN').textContent = '(문제은행을 찾지 못했습니다)'; });
+}
+function say(t, c){
+  const m = $('#lockMsg'); if(!m) return;
+  m.innerHTML = t;
+  m.style.color = c === 'bad' ? 'var(--no)' : (c === 'ok' ? 'var(--ok)' : 'var(--dim)');
+}
+
+async function findKey(kek, keys){
+  for(const k of keys){
+    try{
+      const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64(k.iv)}, kek, b64(k.blob));
+      return JSON.parse(new TextDecoder().decode(plain));
+    }catch(_){}
+  }
+  throw new Error('BADPW');
+}
+/* 교사용으로 열면 그 주 학생 코드를 계산해 보여 줍니다.
+   마스터 시크릿은 교사용으로 감싼 안쪽에만 있어 학생 코드로는 계산할 수 없습니다. */
+async function weekCode(msB64, prefix, mon){
+  const k = await crypto.subtle.importKey('raw', b64(msB64), {name:'HMAC', hash:'SHA-256'}, false, ['sign']);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', k,
+    new TextEncoder().encode((prefix || 'HONGW|') + isoOf(mon))));
+  const n = ((sig[0]<<24)>>>0) + (sig[1]<<16) + (sig[2]<<8) + sig[3];
+  return String(n % 90000000 + 10000000);
+}
+
+async function unlock(pw, quiet){
+  if(!pw) return;
+  try{
+    if(!quiet) say('여는 중…');
+    const blob = await (await fetch('bank.enc', {cache:'no-store'})).json();
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+    const kek = await crypto.subtle.deriveKey(
+      {name:'PBKDF2', salt:b64(blob.kdf.salt), iterations:blob.kdf.iter, hash:'SHA-256'},
+      base, {name:'AES-GCM', length:256}, false, ['decrypt']);
+    const info = await findKey(kek, blob.keys);
+    const today = isoOf(new Date());
+    if(info.nbf && today <  info.nbf){ const e = new Error('NOTYET');  e.when = info.nbf; throw e; }
+    if(info.exp && today >= info.exp){ const e = new Error('EXPIRED'); e.when = info.exp; throw e; }
+
+    const ck = await crypto.subtle.importKey('raw', b64(info.ck), {name:'AES-GCM'}, false, ['decrypt']);
+    const sealed = b64(blob.data);
+    const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv:sealed.slice(0,12)}, ck, sealed.slice(12));
+    const ds = new DecompressionStream('gzip');      // gzip 해제는 브라우저 내장
+    const txt = await new Response(new Blob([plain]).stream().pipeThrough(ds)).text();
+    const j = JSON.parse(txt);
+    window.GAS_BUILT = j.built; window.GAS_ROUNDS = j.rounds; window.GAS_BANK = j.bank; window.GAS_EXAMS = j.exams;
+
+    try{
+      localStorage.setItem(LOCK_KEY, pw);
+      if(!info.exp) localStorage.setItem(SHARED_KEY, pw);   // 만료되는 코드는 공용에 넣지 않습니다
+    }catch(e){}
+
+    document.querySelectorAll('.tab').forEach(t => t.style.display = '');
+    boot();
+    if(!quiet && info.role === 'teacher' && info.ms){
+      const c = await weekCode(info.ms, info.prefix, mondayOf(new Date()));
+      alertCard('이번 주 학생 코드 — ' + c.slice(0,4) + ' ' + c.slice(4),
+                '오늘부터 다음 월요일까지 씁니다. 학생에게 이 코드를 알려 주세요.');
+    }
+    return true;
+  }catch(e){
+    const m = e && e.message;
+    if(m === 'EXPIRED')     say('사용 기간이 끝난 코드입니다(' + e.when + '까지). 선생님께 이번 주 코드를 받으세요.', 'bad');
+    else if(m === 'NOTYET') say('아직 쓸 수 없는 코드입니다. ' + e.when + '부터 쓸 수 있어요.', 'bad');
+    else if(!quiet)         say('암호가 맞지 않습니다.', 'bad');
+    try{ localStorage.removeItem(LOCK_KEY); }catch(_){}   // 공용 키는 건드리지 않습니다
+    return false;
+  }
+}
+/* 교사에게만 보이는 알림 — 화면 위에 한 장 띄웁니다 */
+function alertCard(title, msg){
+  const ov = el(`<div class="ovl"><div class="box">
+      <h3>${esc(title)}</h3><div class="msg">${esc(msg)}</div>
+      <div class="row" style="margin-top:14px;justify-content:flex-end">
+        <button class="btn btn-primary" id="okBtn">확인</button></div></div></div>`);
+  document.body.appendChild(ov);
+  ov.querySelector('#okBtn').onclick = ()=> ov.remove();
+}
+
+/* 잠금 화면을 띄우고, 전에 쓰던 암호가 있으면 조용히 먼저 넣어 봅니다 */
+function startLocked(){
+  lockScreen();
+  try{
+    const a = localStorage.getItem(LOCK_KEY), b = localStorage.getItem(SHARED_KEY), t = [];
+    if(a) t.push(a);
+    if(b && b !== a) t.push(b);                    // 이 도구 것 → 도구 공용 것 순서
+    (function next(i){ if(i >= t.length) return;
+      unlock(t[i], true).then(ok => { if(!ok) next(i+1); }); })(0);
+  }catch(e){}
+}
+
+/* ── 시작 ──────────────────────────────────────────────────────
+   이 PC(로컬 서버·파일 열기)에서는 평문 data/bank.js 로 바로 씁니다.
+   배포본에는 그 파일이 없으므로(.gitignore) 아예 부르지 않습니다 —
+   괜히 부르면 학생 화면마다 콘솔에 404 가 남습니다.                  */
+const LOCAL = ['localhost','127.0.0.1','::1'].indexOf(location.hostname) >= 0
+              || location.protocol === 'file:';
+if(LOCAL){
+  const s = document.createElement('script');
+  s.src = 'data/bank.js';
+  s.onload  = ()=> (window.GAS_BANK && window.GAS_BANK.length) ? boot() : startLocked();
+  s.onerror = startLocked;                         // 평문이 없으면 잠긴 것을 풉니다
+  document.head.appendChild(s);
+}else{
+  startLocked();
+}
+</script>
+
+<!-- 공용 위젯 — 순서 그대로 두세요 (규약 1 · 3 · 3-1) -->
+<script src="https://hongyul67-cpu.github.io/links/collector.js"  data-tool="가스기능사 필기"></script>
+<script src="https://hongyul67-cpu.github.io/links/fx.js"></script>
+<script src="https://hongyul67-cpu.github.io/links/rank.js"       data-tool="가스기능사" data-pace="class"></script>
+<script src="https://hongyul67-cpu.github.io/links/reset.js"></script>
+<script src="https://hongyul67-cpu.github.io/links/backbar.js"></script>
+<script src="https://hongyul67-cpu.github.io/links/chalk.js"></script>
+</body>
+</html>
