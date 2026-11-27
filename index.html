@@ -253,7 +253,18 @@ function renderNoBank(v){
 
 /* ── 홈 — 범위 고르기 ──────────────────────────────────────── */
 function renderHome(v){
-  /* 짝 도구(가스기능사 마스터 — 배우기·그림·게임)는 14번 칸에서 만들어지면 여기 링크를 겁니다 */
+  /* 짝 도구 — 개념부터 보려면 마스터로 (규약: 두 도구가 서로를 가리킨다) */
+  v.appendChild(el(`<div class="card" style="border-color:#fdc9a8;background:#fff8f3">
+    <h3>📖 개념부터 보고 싶다면</h3>
+    <div class="muted">여기는 <b>문제를 푸는 곳</b>입니다. 용어가 낯설면 짝이 되는 도구에서
+      개념 카드 445장과 그림 116장을 먼저 훑어 보세요. 게임 3종과 수업 슬라이드도 그쪽에 있습니다.
+      계급(RP)은 두 도구가 같이 씁니다.</div>
+    <div class="row" style="margin-top:10px">
+      <a class="btn btn-primary" style="text-decoration:none"
+         href="https://hongyul67-cpu.github.io/gas-craftsman-master/">가스기능사 마스터 열기 →</a>
+    </div>
+  </div>`));
+
   const nDup = BANK.length - FRESH.length;
   v.appendChild(el(`<div class="card">
     <h3>어디에서 낼까요?</h3>
